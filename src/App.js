@@ -1,25 +1,45 @@
-import logo from './logo.svg';
-import './App.css';
+import { Container, Flex, Spinner, VStack } from "@chakra-ui/core";
+import React, { useEffect, useState } from "react";
+import Post from "./components/post";
+import db from "./lib/firebase";
+import Navbar from "./components/navbar";
 
-function App() {
+
+const App = () => {
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    // Hook to handle the real-time updating of posts whenever there is a
+    // change in the datastore (https://firebase.google.com/docs/firestore/query-data/listen#view_changes_between_snapshots)
+
+    db.collection("posts")
+      .orderBy("createdAt", "desc")
+      .onSnapshot((querySnapshot) => {
+        const _posts = [];
+
+        querySnapshot.forEach((doc) => {
+          _posts.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+
+        setPosts(_posts);
+      });
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+    <Navbar />
+      <Container maxW="md" centerContent p={8}>
+        <VStack spacing={8} w="100%">
+          {posts.map((post) => (
+            <Post post={post} key={post.id} />
+          ))}
+        </VStack>
+      </Container>
+    </>
   );
-}
+};
 
 export default App;
